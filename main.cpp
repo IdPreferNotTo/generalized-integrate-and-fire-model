@@ -24,7 +24,27 @@ get_deterministic_values(const string *model, double *v, double *w, double *a, d
     int spikes = 0;
     bool fire = false;
 
+    struct passwd *pw = getpwuid(getuid());
+    const char *homedir = pw->pw_dir;
+
+    string path = "/Data/" + *model + "/data/";
+    char parameters[100];
+    if((*model=="LIF") || (*model=="QIF")){
+        std::sprintf(parameters, "mu%.2f_taua%.1f_Delta%.1f.txt", input,
+                     tau_a, jump_a);
+    }
+    if(*model=="GIF"){
+        std::sprintf(parameters, "mu%.2f_beta%.1f_tauw%.1f_taua%.1f_Delta%.1f.txt", input, beta_gif, tau_gif,
+                     tau_a, jump_a);
+    }
+
+    string dataFile;
+    dataFile = string(homedir) + path + parameters;
+    ofstream file_a;
+    file_a.open(dataFile);
+    int N = 0;
     while (dif_t > precision_delta_t) {
+        N +=1;
         if (spikes < 1000) {
             if (tau_a > 0.001) {
                 w_tmp = *w;
@@ -36,6 +56,9 @@ get_deterministic_values(const string *model, double *v, double *w, double *a, d
                 }
                 if (*model == "QIF") {
                     fire = adap_QIF(v, a, t, 10000, gamma,  input, tau_a, jump_a, 0, 0, dt);
+                }
+                if (N%100==0){
+                    file_a << *t << ' ' << *a << ' ' << "\n";
                 }
             } else {
                 w_tmp = *w;
@@ -61,6 +84,7 @@ get_deterministic_values(const string *model, double *v, double *w, double *a, d
             dt /= 2;
         }
     }
+    file_a.close();
     return make_tuple(T, w_tmp, *a);
 }
 
@@ -124,13 +148,14 @@ int main(int argc, char *argv[]) {
     // Numerical parameters
     auto dt = desc.get<double>("num parameter.step size");
     const auto maxSpikeCount = desc.get<int>("num parameter.max spikes");
+    const auto N = desc.get<int>("num parameter.run");
 
     // ------------------------ Parameters for output file -------------------------------------------------------------
     string path = "/Data/" + model + "/data/";
     char parameters[100];
     if((model=="LIF") || (model=="QIF")){
-        std::sprintf(parameters, "mu%.2f_taua%.1f_Delta%.1f_taun%.3f_Dn%.2e_Dw%.2e.txt", input,
-                 tau_a, jump_a, tau_ou, D_ou, D_wn);
+        std::sprintf(parameters, "mu%.2f_taua%.1f_Delta%.1f_taun%.3f_Dn%.2e_Dw%.2e_%d.txt", input,
+                 tau_a, jump_a, tau_ou, D_ou, D_wn, N);
     }
     if(model=="GIF"){
         std::sprintf(parameters, "mu%.2f_beta%.1f_tauw%.1f_taua%.1f_Delta%.1f_taun%.3f_Dn%.2e_Dw%.2e.txt", input, beta_gif, tau_gif,
