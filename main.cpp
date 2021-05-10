@@ -224,6 +224,7 @@ int main(int argc, char *argv[]) {
             if (isAdaptiv) {
                 if (model == "LIF") {
                     neuronFired = cnoise_adap_LIF(&v, &a, &noise, &t, gamma, input, tau_a, jump_a, tau_ou, D_ou, D_wn, rng_ou, rng_wn, dt);
+                    //neuronFired = gnoise_adap_LIF(&v, &a, &noise, &t, gamma, input, tau_a, jump_a, tau_ou, D_ou, D_wn, rng_wn, dt);
                     //neuronFired = cnoise_extra_noisy_adap_LIF(&v, &a, &noise, &t, rng_ou, rng_wn, dt, gamma, input, tau_a, jump_a, tau_ou, D_ou, D_wn);
                 }
                 if (model == "GIF") {

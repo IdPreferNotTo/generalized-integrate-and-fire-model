@@ -148,6 +148,25 @@ cnoise_adap_LIF(double *v, double *a, double *n, double *t, double gamma, double
     return false;
 }
 
+bool
+gnoise_adap_LIF(double *v, double *a, double *n, double *t, double gamma, double mu, double tau_a, double delta, double tau_n, double D_n, double D_w, double xi, double stepSize) {
+
+    /* Differential equation: Exponential LIF Model
+    * \dot{v} = -γ*v + μ - a + η
+    * \dot{η} = -η + √2D*ξ
+    * \dot{a} = -a/τ_a + Δ*\sum δ(t - t_i)
+    */
+    *t += stepSize;
+    if (*v >= 1.) {
+        *v = 0;
+        *a += delta/tau_a;
+        return true;
+    }
+    *v += stepSize * (-gamma*(*v) + mu - *a - *n) + sqrt(stepSize * 2 * D_w) * xi;
+    *n += stepSize * (-*n / tau_n) + sqrt(stepSize * 2 * D_n) * (-xi) / tau_n;
+    *a += stepSize * (-*a / tau_a);
+    return false;
+}
 
 bool
 GIF(double *v, double *w, double *t, double gamma, double mu, double beta, double tau_w, double w_reset,

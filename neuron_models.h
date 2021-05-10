@@ -58,6 +58,10 @@ cnoise_adap_LIF(double *v, double *a, double *n, double *t, double gamma, double
 
 
 bool
+gnoise_adap_LIF(double *v, double *a, double *n, double *t, double gamma, double mu, double tau_a, double delta, double tau_n, double D_n, double D_w, double xi, double stepSize);
+
+
+bool
 GIF(double *v, double *w, double *t, double gamma, double mu, double beta, double tau_w, double w_reset,
     double D, double xi, double stepSize);
 
