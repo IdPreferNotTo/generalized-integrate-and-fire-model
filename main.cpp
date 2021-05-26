@@ -173,8 +173,8 @@ int main(int argc, char *argv[]) {
 
     // -------------------------- Noise parameters & random number generator -------------------------------------------
     // This is how random number should be generated. Best practice!
-    double rng_ou = 0;
-    double rng_wn = 0;
+    double rng_ou;
+    double rng_wn;
     const double mean = 0.0;
     const double stddev = 1.0;
     std::random_device rd;
@@ -224,7 +224,6 @@ int main(int argc, char *argv[]) {
             if (isAdaptiv) {
                 if (model == "LIF") {
                     neuronFired = cnoise_adap_LIF(&v, &a, &noise, &t, gamma, input, tau_a, jump_a, tau_ou, D_ou, D_wn, rng_ou, rng_wn, dt);
-                    //neuronFired = gnoise_adap_LIF(&v, &a, &noise, &t, gamma, input, tau_a, jump_a, tau_ou, D_ou, D_wn, rng_wn, dt);
                     //neuronFired = cnoise_extra_noisy_adap_LIF(&v, &a, &noise, &t, rng_ou, rng_wn, dt, gamma, input, tau_a, jump_a, tau_ou, D_ou, D_wn);
                 }
                 if (model == "GIF") {

@@ -14,7 +14,8 @@ QIF(double *v, double *t, double gamma, double mu, double vT, double D, double x
 
 
 bool
-cnoise_QIF(double *v, double *n, double *t, double gamma, double mu, double vT, double tau_n, double D_n, double D_w, double xi_n, double xi_w, double stepSize);
+cnoise_QIF(double *v, double *n, double *t, double gamma, double mu, double vT, double tau_n, double D_n, double D_w,
+           double xi_n, double xi_w, double stepSize);
 
 
 bool
@@ -24,7 +25,8 @@ adap_QIF(double *v, double *a, double *t, double vT, double gamma, double mu, do
 
 bool
 cnoise_adap_QIF(double *v, double *a, double *n, double *t, double vT, double gamma, double mu,
-                double tau_a, double delta, double tau_n, double D_n, double D_w, double xi_n, double xi_w, double stepSize);
+                double tau_a, double delta, double tau_n, double D_n, double D_w, double xi_n, double xi_w,
+                double stepSize);
 
 
 bool
@@ -45,21 +47,17 @@ LIF(double *v, double *t, double gamma, double mu, double D, double xi, double s
 
 
 bool
-adap_LIF(double *v, double *a, double *t, double gamma, double mu, double tau_a, double delta, double D, double xi, double stepSize);
+adap_LIF(double *v, double *a, double *t, double gamma, double mu, double tau_a, double delta, double D, double xi,
+         double stepSize);
 
 
 bool
 cnoise_LIF(double *v, double *n, double *t, double gamma, double mu, double tau_n,
            double D_n, double D_w, double xi_n, double xi_w, double stepSize);
 
-
 bool
-cnoise_adap_LIF(double *v, double *a, double *n, double *t, double gamma, double mu, double tau_a, double delta, double tau_n, double D_n, double D_w, double xi_n, double xi_w, double stepSize);
-
-
-bool
-gnoise_adap_LIF(double *v, double *a, double *n, double *t, double gamma, double mu, double tau_a, double delta, double tau_n, double D_n, double D_w, double xi, double stepSize);
-
+cnoise_adap_LIF(double *v, double *a, double *n, double *t, double gamma, double mu, double tau_a, double delta,
+                double tau_n, double D_n, double D_w, double xi_n, double xi_w, double stepSize);
 
 bool
 GIF(double *v, double *w, double *t, double gamma, double mu, double beta, double tau_w, double w_reset,
@@ -67,14 +65,19 @@ GIF(double *v, double *w, double *t, double gamma, double mu, double beta, doubl
 
 
 bool
-adap_GIF(double *v, double *w, double *a, double *t, double gamma, double mu, double beta, double tau_w, double w_reset, double tau_a,
+adap_GIF(double *v, double *w, double *a, double *t, double gamma, double mu, double beta, double tau_w, double w_reset,
+         double tau_a,
          double delta, double D, double xi, double stepSize);
 
 
 bool
-cnoise_GIF(double *v, double *w, double *n, double *t, double gamma, double mu, double beta, double tau_w, double w_reset, double tau_n, double D_n, double D_w, double xi_n, double xi_w, double stepSize);
+cnoise_GIF(double *v, double *w, double *n, double *t, double gamma, double mu, double beta, double tau_w,
+           double w_reset, double tau_n, double D_n, double D_w, double xi_n, double xi_w, double stepSize);
 
 
 bool
-cnoise_adap_GIF(double *v, double *w, double *a, double *n, double *t, double gamma, double mu, double beta, double tau_w, double w_reset, double tau_a, double delta, double tau_n, double D_n, double D_w, double xi_n, double xi_w, double stepSize);
+cnoise_adap_GIF(double *v, double *w, double *a, double *n, double *t, double gamma, double mu, double beta,
+                double tau_w, double w_reset, double tau_a, double delta, double tau_n, double D_n, double D_w,
+                double xi_n, double xi_w, double stepSize);
+
 #endif //SCH13_NEURON_MODELS_H
