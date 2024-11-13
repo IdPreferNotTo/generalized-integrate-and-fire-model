@@ -9,16 +9,16 @@
 #include <vector>
 
 double
-calculate_qif_lin_resp(std::vector<double> &noises, double stepSize, double mu);
+calculateQifLinResp(std::vector<double> &noises, double stepSize, double mu);
 
 double
-calculate_theta_lin_resp(std::vector<double> &noises, double stepSize, double t_det);
+calculateThetaLinResp(std::vector<double> &noises, double stepSize, double tDet);
 
 double
-calculate_lif_lin_resp(std::vector<double> &noises, double stepSize);
+calculateLifLinResp(std::vector<double> &noises, double stepSize);
 
 double
-calculate_gif_lin_resp(std::vector<double> &noises, double stepSize, double mu, double beta, double tau_w, double Delta,
-                       double t_det, double a_det, double w_det);
+calculateGifLinResp(std::vector<double> &noises, double stepSize, double mu, double beta, double tauW, double delta,
+                    double tDet, double aDet, double wDet);
 
 #endif //SCH13_LINEAR_RESPONSE_H

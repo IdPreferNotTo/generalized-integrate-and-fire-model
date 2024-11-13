@@ -14,15 +14,15 @@ using namespace std;
 namespace pt = boost::property_tree;
 
 tuple<double, double, double>
-get_deterministic_values(const string *model, double *v, double *w, double *a, double *t, double gamma, double input, double beta_gif, double tau_gif, double gif_reset,
-                         double tau_a, double jump_a, double dt) {
-    double T = 0;
-    double t_tmp = *t;
-    double w_tmp = *w;
-    double dif_t = 10;
-    double precision_delta_t = 0.00001;
-    int spikes = 0;
-    bool fire = false;
+getDeterministicValues(const string *model, double *v, double *w, double *a, double *t, double gamma, double input, double betaGif, double tauGif, double gifReset,
+                       double tauA, double deltaA, double dt) {
+    double tInit = 0;
+    double tTmp = *t;
+    double wTmp = *w;
+    double difT = 10;
+    double tStepSize = 0.00001;
+    int spikeNumber = 0;
+    bool hasFired = false;
 
     struct passwd *pw = getpwuid(getuid());
     const char *homedir = pw->pw_dir;
@@ -31,66 +31,66 @@ get_deterministic_values(const string *model, double *v, double *w, double *a, d
     char parameters[100];
     if((*model=="LIF") || (*model=="QIF")){
         std::sprintf(parameters, "mu%.2f_taua%.1f_Delta%.1f.txt", input,
-                     tau_a, jump_a);
+                     tauA, deltaA);
     }
     if(*model=="GIF"){
-        std::sprintf(parameters, "mu%.2f_beta%.1f_tauw%.1f_taua%.1f_Delta%.1f.txt", input, beta_gif, tau_gif,
-                     tau_a, jump_a);
+        std::sprintf(parameters, "mu%.2f_beta%.1f_tauw%.1f_taua%.1f_Delta%.1f.txt", input, betaGif, tauGif,
+                     tauA, deltaA);
     }
 
     string dataFile;
     dataFile = string(homedir) + path + parameters;
-    ofstream file_a;
-    file_a.open(dataFile);
-    int N = 0;
-    while (dif_t > precision_delta_t) {
-        N +=1;
-        if (spikes < 1000) {
-            if (tau_a > 0.001) {
-                w_tmp = *w;
+    ofstream fileA;
+    fileA.open(dataFile);
+    int n = 0;
+    while (difT > tStepSize) {
+        n +=1;
+        if (spikeNumber < 1000) {
+            if (tauA > 0.001) {
+                wTmp = *w;
                 if (*model == "LIF") {
-                    fire = adap_LIF(v, a, t, gamma, input, tau_a, jump_a, 0, 0, dt);
+                    hasFired = adapLif(v, a, t, gamma, input, tauA, deltaA, 0, 0, dt);
                 }
                 if (*model == "GIF") {
-                    fire = adap_GIF(v, w, a, t, gamma, input, beta_gif, tau_gif, gif_reset, tau_a, jump_a, 0, 0, dt);
+                    hasFired = adapGif(v, w, a, t, gamma, input, betaGif, tauGif, gifReset, tauA, deltaA, 0, 0, dt);
                 }
                 if (*model == "QIF") {
-                    fire = adap_QIF(v, a, t, 10000, gamma,  input, tau_a, jump_a, 0, 0, dt);
+                    hasFired = adapQif(v, a, t, 10000, gamma, input, tauA, deltaA, 0, 0, dt);
                 }
-                if (N%100==0){
-                    file_a << *t << ' ' << *a << ' ' << "\n";
+                if (n % 100 == 0){
+                    fileA << *t << ' ' << *a << ' ' << "\n";
                 }
             } else {
-                w_tmp = *w;
-                //fire = theta(v, t, 0, stepSize, 0.);
+                wTmp = *w;
+                //hasFired = theta(v, t, 0, stepSize, 0.);
                 if (*model == "LIF") {
-                    fire = LIF(v, t, gamma,  input, 0, 0, dt);
+                    hasFired = lif(v, t, gamma, input, 0, 0, dt);
                 }
                 if (*model == "GIF") {
-                    fire = GIF(v, w, t, gamma, input, beta_gif, tau_gif, gif_reset, 0, 0, dt);
+                    hasFired = gif(v, w, t, gamma, input, betaGif, tauGif, gifReset, 0, 0, dt);
                 }
                 if (*model == "QIF") {
-                    fire = QIF(v, t, gamma, input, 10000, 0, 0, dt);
+                    hasFired = qif(v, t, gamma, input, 10000, 0, 0, dt);
                 }
             }
-            if (fire) {
-                dif_t = abs(T - (*t - t_tmp));
-                T = *t - t_tmp;
-                t_tmp = *t;
-                spikes++;
+            if (hasFired) {
+                difT = abs(tInit - (*t - tTmp));
+                tInit = *t - tTmp;
+                tTmp = *t;
+                spikeNumber++;
             }
         } else {
-            spikes = 0;
+            spikeNumber = 0;
             dt /= 2;
         }
     }
-    file_a.close();
-    return make_tuple(T, w_tmp, *a);
+    fileA.close();
+    return make_tuple(tInit, wTmp, *a);
 }
 
 void
-save_noise(size_t bufferSize, vector<vector<double>> &x, vector<int> &stepCounts, int spikeCount, int nonLinRespCount,
-           double noise) {
+saveNoise(size_t bufferSize, vector<vector<double>> &x, vector<int> &stepCounts, int spikeCount, int nonLinRespCount,
+          double noise) {
 
     if (spikeCount >= nonLinRespCount) {
         if (spikeCount % bufferSize < nonLinRespCount % bufferSize) {
@@ -119,80 +119,81 @@ save_noise(size_t bufferSize, vector<vector<double>> &x, vector<int> &stepCounts
 int main(int argc, char *argv[]) {
     //---------- read parameters form json file with boost -------------------------------------------------------------
     struct passwd *pw = getpwuid(getuid());
-    const char *homedir = pw->pw_dir;
+    // const char *homedir = pw->pw_dir;
 
-    string paraFile = string(homedir) + "/Parameter/" + string(argv[1]) + ".json";
+    string paraFile = "../parameter/" + string(argv[1]) + ".json";
     pt::ptree desc;
     pt::json_parser::read_json(paraFile, desc);
 
     // General parameters
-    const auto model = desc.get<string>("neuron model.model");
+    const auto modelName = desc.get<string>("neuron model.model");
     const auto input = desc.get<double>("neuron model.mu");
     const auto gamma = desc.get<double>("neuron model.gamma");
-    // GIF parameters
-    const auto beta_gif = desc.get<double>("neuron model.GIF.beta");
-    const auto tau_gif = desc.get<double>("neuron model.GIF.time constant");
-    const auto reset_gif = desc.get<double>("neuron model.GIF.reset");
+    // gif parameters
+    const auto betaGif = desc.get<double>("neuron model.GIF.beta");
+    const auto tauGif = desc.get<double>("neuron model.GIF.time constant");
+    const auto resetGif = desc.get<double>("neuron model.GIF.reset");
 
     // Adaptation parameters
-    const auto tau_a = desc.get<double>("adaptation.time constant");
-    const auto jump_a = desc.get<double>("adaptation.strength");
+    const auto tauA = desc.get<double>("adaptation.time constant");
+    const auto deltaA = desc.get<double>("adaptation.strength");
 
     // Noise parameters
-    const auto D_wn = desc.get<double>("noise.intensity");
+    const auto dWn = desc.get<double>("noise.intensity");
 
     // OUP parameters
-    const auto D_ou = desc.get<double>("OU.intensity");
-    const auto tau_ou = desc.get<double>("OU.time constant");
+    const auto dOu = desc.get<double>("OU.intensity");
+    const auto tauOu = desc.get<double>("OU.time constant");
 
     // Numerical parameters
     auto dt = desc.get<double>("num parameter.step size");
     const auto maxSpikeCount = desc.get<int>("num parameter.max spikes");
-    const auto N = desc.get<int>("num parameter.run");
+    const auto nrRun = desc.get<int>("num parameter.run");
 
     // ------------------------ Parameters for output file -------------------------------------------------------------
-    string path = "/Data/" + model + "/data/";
+    std::string path = "../out/";
     char parameters[100];
-    if((model=="LIF") || (model=="QIF")){
+    if((modelName == "LIF") || (modelName == "QIF")){
         std::sprintf(parameters, "mu%.2f_taua%.1f_Delta%.1f_taun%.3f_Dn%.2e_Dw%.2e_%d.txt", input,
-                 tau_a, jump_a, tau_ou, D_ou, D_wn, N);
+                     tauA, deltaA, tauOu, dOu, dWn, nrRun);
     }
-    if(model=="GIF"){
-        std::sprintf(parameters, "mu%.2f_beta%.1f_tauw%.1f_taua%.1f_Delta%.1f_taun%.3f_Dn%.2e_Dw%.2e.txt", input, beta_gif, tau_gif,
-                     tau_a, jump_a, tau_ou, D_ou, D_wn);
+    if(modelName == "GIF"){
+        std::sprintf(parameters, "mu%.2f_beta%.1f_tauw%.1f_taua%.1f_Delta%.1f_taun%.3f_Dn%.2e_Dw%.2e.txt", input, betaGif, tauGif,
+                     tauA, deltaA, tauOu, dOu, dWn);
     }
     string dataFile;
-    dataFile = string(homedir) + path + parameters;
+    dataFile  = path + parameters;
     ofstream file;
     file.open(dataFile);
     if (!file.is_open()) {
         cout << "Could not open file at: " << dataFile << endl;
         return 1;
     }
-    file << "# t delta_a eta lin.resp" << endl;
+    file << "# t deltaA eta lin.resp" << endl;
 
     // -------------------------- Noise parameters & random number generator -------------------------------------------
     // This is how random number should be generated. Best practice!
-    double rng_ou;
-    double rng_wn;
+    double rngOu;
+    double rngWn;
     const double mean = 0.0;
-    const double stddev = 1.0;
+    const double stdDev = 1.0;
     std::random_device rd;
     std::mt19937 generator(rd());
     //Better seed from random_device instead of clock in case one runs many simulations in a short periode of time
-    std::normal_distribution<double> dist(mean, stddev);
+    std::normal_distribution<double> dist(mean, stdDev);
     vector<vector<double>> dataBuffer(maxSpikeCount, vector<double>(4));
     // dataBuffer = [[t1, δa_1, χ_1, η_1], [t2, δa_2, χ_2, η_2], ...]
 
 
     // -------------------------- Get deterministic values -------------------------------------------------------------
-    double v = 0; // v
+    double v = 0;
     double w = 0;
-    double noise = 0.; // η
-    double a = jump_a; // a
-    double t = 0; // t
+    double noise = 0.;
+    double a = deltaA;
+    double t = 0;
     double tDet, wDet, aDet;
-    tie(tDet, wDet, aDet) = get_deterministic_values(&model, &v, &w, &a, &t, gamma, input, beta_gif, tau_gif, reset_gif, tau_a, jump_a, dt);
+    tie(tDet, wDet, aDet) = getDeterministicValues(&modelName, &v, &w, &a, &t, gamma, input, betaGif, tauGif, resetGif,
+                                                   tauA, deltaA, dt);
     file << "# tDet: " << tDet << '\n' << "# wDet: " << wDet << '\n' << "# aDet: " << aDet << endl;
     file << "# dt: " << dt << endl;
 
@@ -206,66 +207,71 @@ int main(int argc, char *argv[]) {
     vector<int> noiseStepCounter(100, 0);
     int noiseBufferCount = 0;
 
-    t = 0; // Reset time. Other values i.e. v, a, (w) remain unchanged and thus are v=0, a=a_det, w=w_det
+    t = 0; // Reset time. Other values i.e. v, a, (w) remain unchanged and thus are v=0, a=aDet, w=wDet
     double tFire = 0;
     int spikeCount = 0;
     bool neuronFired = false;
 
-    const bool isAdaptiv = (tau_a > 0.001);
-    const bool isColored = (tau_ou > 0.001);
+    const bool isAdaptive = (tauA > 0.001);
+    const bool isColored = (tauOu > 0.001);
     while (spikeCount < maxSpikeCount) {
-        rng_ou = dist(generator);
-        rng_wn = dist(generator);
+        rngOu = dist(generator);
+        rngWn = dist(generator);
         /*
-         * depending on tau_a and tau_n different model models have to be used as tau -> 0 implies a division
+         * depending on tauA and tau_n different modelName models have to be used as tau -> 0 implies a division
          * by 0 which can not be handled.
          */
         if (isColored) {
-            if (isAdaptiv) {
-                if (model == "LIF") {
-                    neuronFired = cnoise_adap_LIF(&v, &a, &noise, &t, gamma, input, tau_a, jump_a, tau_ou, D_ou, D_wn, rng_ou, rng_wn, dt);
-                    //neuronFired = cnoise_extra_noisy_adap_LIF(&v, &a, &noise, &t, rng_ou, rng_wn, dt, gamma, input, tau_a, jump_a, tau_ou, D_ou, D_wn);
+            if (isAdaptive) {
+                if (modelName == "LIF") {
+                    neuronFired = cnoiseAdapLif(&v, &a, &noise, &t, gamma, input, tauA, deltaA, tauOu, dOu, dWn, rngOu,
+                                                rngWn, dt);
+                    //neuronFired = cnoise_extra_noisy_adap_LIF(&v, &a, &noise, &t, rngOu, rngWn, dt, gamma, input, tauA, deltaA, tauOu, dOu, dWn);
                 }
-                if (model == "GIF") {
-                    neuronFired = cnoise_adap_GIF(&v, &w, &a, &noise, &t, gamma, input, beta_gif, tau_gif, reset_gif, tau_a, jump_a, tau_ou, D_ou, D_wn, rng_ou, rng_wn, dt);
+                if (modelName == "GIF") {
+                    neuronFired = cnoiseAdapGif(&v, &w, &a, &noise, &t, gamma, input, betaGif, tauGif, resetGif,
+                                                tauA, deltaA, tauOu, dOu, dWn, rngOu, rngWn, dt);
                 }
-                if (model == "QIF") {
-                    neuronFired = cnoise_adap_QIF(&v, &a, &noise, &t, 10000, gamma, input, tau_a, jump_a, tau_ou, D_ou, D_wn, rng_ou, rng_wn, dt);
+                if (modelName == "QIF") {
+                    neuronFired = cnoiseAdapQif(&v, &a, &noise, &t, 10000, gamma, input, tauA, deltaA, tauOu, dOu, dWn,
+                                                rngOu, rngWn, dt);
                 }
             } else {
-                if (model == "LIF") {
-                    neuronFired = cnoise_LIF(&v, &noise, &t, gamma, input, tau_ou, D_ou, D_wn, rng_ou, rng_wn, dt);
+                if (modelName == "LIF") {
+                    neuronFired = cnoiseLif(&v, &noise, &t, gamma, input, tauOu, dOu, dWn, rngOu, rngWn, dt);
                 }
-                if (model == "GIF") {
-                    neuronFired = cnoise_GIF(&v, &w, &noise, &t, gamma, input, beta_gif, tau_gif, reset_gif, tau_ou, D_ou, D_wn, rng_ou, rng_wn, dt);
+                if (modelName == "GIF") {
+                    neuronFired = cnoiseGif(&v, &w, &noise, &t, gamma, input, betaGif, tauGif, resetGif, tauOu, dOu,
+                                            dWn, rngOu, rngWn, dt);
                 }
-                if (model == "QIF") {
-                    neuronFired = cnoise_QIF(&v, &noise, &t, 10000, gamma, input, tau_ou, D_ou, D_wn, rng_ou, rng_wn, dt);
+                if (modelName == "QIF") {
+                    neuronFired = cnoiseQif(&v, &noise, &t, gamma, input, 10000, tauOu, dOu, dWn, rngOu, rngWn, dt);
                 }
             }
         } else {
-            if (isAdaptiv) {
-                if (model == "LIF") {
-                    neuronFired = adap_LIF(&v, &a, &t, gamma, input, tau_a, jump_a, D_wn, rng_wn, dt);
+            if (isAdaptive) {
+                if (modelName == "LIF") {
+                    neuronFired = adapLif(&v, &a, &t, gamma, input, tauA, deltaA, dWn, rngWn, dt);
                 }
-                if (model == "GIF") {
-                    neuronFired = adap_GIF(&v, &w, &a, &t, gamma, input, beta_gif, tau_gif, reset_gif, tau_a, jump_a, D_wn, rng_wn, dt);
+                if (modelName == "GIF") {
+                    neuronFired = adapGif(&v, &w, &a, &t, gamma, input, betaGif, tauGif, resetGif, tauA, deltaA, dWn,
+                                          rngWn, dt);
                 }
-                if (model == "QIF") {
-                    neuronFired = adap_QIF(&v, &a, &t, 10000, gamma, input, tau_a, jump_a, D_wn, rng_wn, dt);
+                if (modelName == "QIF") {
+                    neuronFired = adapQif(&v, &a, &t, 10000, gamma, input, tauA, deltaA, dWn, rngWn, dt);
                 }
-                noise = rng_wn * sqrt(dt * 2 * D_wn);
+                noise = rngWn * sqrt(dt * 2 * dWn);
             } else {
-                if (model == "LIF") {
-                    neuronFired = LIF(&v, &t, gamma, input, D_wn, rng_wn, dt);
+                if (modelName == "LIF") {
+                    neuronFired = lif(&v, &t, gamma, input, dWn, rngWn, dt);
                 }
-                if (model == "GIF") {
-                    neuronFired = GIF(&v, &w, &t, gamma, input, beta_gif, tau_gif, reset_gif, D_wn, rng_wn, dt);
+                if (modelName == "GIF") {
+                    neuronFired = gif(&v, &w, &t, gamma, input, betaGif, tauGif, resetGif, dWn, rngWn, dt);
                 }
-                if (model == "QIF") {
-                    neuronFired = QIF(&v, &t, gamma, input, 10000, D_wn, rng_wn, dt);
+                if (modelName == "QIF") {
+                    neuronFired = qif(&v, &t, gamma, input, 10000, dWn, rngWn, dt);
                 }
-                noise = rng_wn * sqrt(dt * 2 * D_wn);
+                noise = rngWn * sqrt(dt * 2 * dWn);
             }
         }
 
@@ -280,17 +286,18 @@ int main(int argc, char *argv[]) {
             tFire = t;
         }
 
-        save_noise(bufferSize, noiseBuffer, noiseStepCounter, spikeCount, noiseBufferCount, noise);
+        saveNoise(bufferSize, noiseBuffer, noiseStepCounter, spikeCount, noiseBufferCount, noise);
         if (noiseStepCounter[noiseBufferCount % bufferSize] >= tDetSteps) {
             double linResp = 0;
-            if (model == "LIF") {
-                linResp = calculate_lif_lin_resp(noiseBuffer[noiseBufferCount % bufferSize], dt);
+            if (modelName == "lif") {
+                linResp = calculateLifLinResp(noiseBuffer[noiseBufferCount % bufferSize], dt);
             }
-            if (model == "GIF") {
-                linResp = calculate_gif_lin_resp(noiseBuffer[noiseBufferCount % bufferSize], dt, input, beta_gif, tau_gif, jump_a, tDet, aDet, wDet);
+            if (modelName == "gif") {
+                linResp = calculateGifLinResp(noiseBuffer[noiseBufferCount % bufferSize], dt, input, betaGif, tauGif,
+                                              deltaA, tDet, aDet, wDet);
             }
-            if (model == "QIF") {
-                linResp = calculate_qif_lin_resp(noiseBuffer[noiseBufferCount % bufferSize], dt, input);
+            if (modelName == "qif") {
+                linResp = calculateQifLinResp(noiseBuffer[noiseBufferCount % bufferSize], dt, input);
             }
             dataBuffer[noiseBufferCount][3] = linResp;
             noiseStepCounter[noiseBufferCount % bufferSize] = 0;
